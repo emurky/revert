@@ -14,8 +14,9 @@ typedef	struct		s_list
 	struct s_list	*previous;
 }					t_list;
 
-FILE	*arguments_handling(int argc, char *file_path);
-void	new_list_node(t_list **list, char *buffer);
-void	clear_list(t_list *list);
+FILE		*check_arguments(int argc, char *file_path);
+t_list		*create_list(FILE *file, char **buffer);
+t_list		*new_list_node(char *buffer);
+void		clear_list(t_list *list);
 
 #endif

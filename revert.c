@@ -2,46 +2,32 @@
 
 int		main(int argc, char **argv)
 {
-	FILE	*file;
-	size_t	linecapp;
-	t_list	*head = NULL;
+	FILE	*file = NULL;
 	t_list	*list = NULL;
 	char	*buffer = NULL;
 
-	file = arguments_handling(argc, argv[1]);
+	file = check_arguments(argc, argv[1]);
 	if (!file) {
 		return (1);
 	}
 
-	if (getline(&buffer, &linecapp, file)) {
-		list = malloc(sizeof(t_list));
-		head = list;
-		list->line = strdup(buffer);
-		list->next = NULL;
-		list->previous = NULL;
-	}
-
-	while (getline(&buffer, &linecapp, file) > 0) {
-		new_list_node(&list, buffer);
-	}
-	getline(&buffer, &linecapp, file);
-	new_list_node(&list, buffer);
-
+	list = create_list(file, &buffer);
 	while (list->previous) {
 		printf("%s", list->line);
 		list = list->previous;
 	}
 	printf("%s", list->line);
 
-	clear_list(head);
+	clear_list(list);
 	free(buffer);
 	fclose(file);
+
 	return (0);
 }
 
-FILE	*arguments_handling(int argc, char *file_path)
+FILE	*check_arguments(int argc, char *file_path)
 {
-	FILE	*file;
+	FILE	*file = NULL;
 
 	if (argc != 2) {
 		printf("Error\nThere must be only one argument as a file name\n");
@@ -53,24 +39,50 @@ FILE	*arguments_handling(int argc, char *file_path)
 		printf("Error\nCannot open file\n");
 		return (NULL);
 	}
+
 	return (file);
 }
 
-void	new_list_node(t_list **list, char *buffer)
+t_list	*create_list(FILE *file, char **buffer)
 {
-	t_list	*previous_node;
+	t_list	*list = NULL;
+	t_list	*previous_node = NULL;
+	size_t	linecapp;
 
-	previous_node = *list;
-	(*list)->next = malloc(sizeof(t_list));
-	(*list) = (*list)->next;
-	(*list)->line = strdup(buffer);
-	(*list)->next = NULL;
-	(*list)->previous = previous_node;
+	if (getline(buffer, &linecapp, file)) {
+		list = new_list_node(*buffer);
+	}
+
+	while (getline(buffer, &linecapp, file) > 0) {
+		previous_node = list;
+		list->next = new_list_node(*buffer);
+		list = list->next;
+		list->previous = previous_node;
+	}
+	getline(buffer, &linecapp, file);
+	previous_node = list;
+	list->next = new_list_node(*buffer);
+	list = list->next;
+	list->previous = previous_node;
+
+	return (list);
+}
+
+t_list	*new_list_node(char *buffer)
+{
+	t_list	*new_node = NULL;
+
+	new_node = (t_list *)malloc(sizeof(t_list));
+	new_node->line = strdup(buffer);
+	new_node->next = NULL;
+	new_node->previous = NULL;
+
+	return (new_node);
 }
 
 void	clear_list(t_list *list)
 {
-	t_list	*clear;
+	t_list	*clear = NULL;
 
 	while (list->next) {
 		clear = list;
@@ -78,6 +90,6 @@ void	clear_list(t_list *list)
 		list = list->next;
 		free(clear);
 	}
-	free(list);
 	free(list->line);
+	free(list);
 }

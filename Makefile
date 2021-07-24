@@ -15,3 +15,5 @@ clean:
 			rm -f $(OBJS) $(NAME)
 
 re:			clean all
+
+#leaks --atExit -- ./revert revert.c
