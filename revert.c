@@ -2,25 +2,19 @@
 
 int		main(int argc, char **argv)
 {
-	FILE	*file = NULL;
-	t_list	*list = NULL;
+	FILE		*file = NULL;
+	char		*buffer = NULL;
+	size_t		line_count = 0;
 
 	file = check_arguments(argc, argv[1]);
 	if (!file) {
 		return (1);
 	}
 
-	list = create_list(file);
-	if (!list) {
-		return (1);
-	}
-	while (list->previous) {
-		printf("%s", list->line);
-		list = list->previous;
-	}
-	printf("%s", list->line);
+	line_count = count_lines_in_file(file, &buffer) - 1;
+	print_reverted_lines(file, &buffer, line_count);
 
-	clear_list(list);
+	free(buffer);
 	fclose(file);
 
 	return (0);
@@ -44,66 +38,36 @@ FILE	*check_arguments(int argc, char *file_path)
 	return (file);
 }
 
-t_list	*create_list(FILE *file)
+size_t	count_lines_in_file(FILE *file, char **buffer)
 {
-	t_list	*list = NULL;
-	t_list	*previous_node = NULL;
-	char	*buffer = NULL;
-	size_t	linecapp;
+	size_t		line_count = 0;
+	ssize_t		linelen = 0;
+	size_t		linecap = 0;
 
-	if (getline(&buffer, &linecapp, file)) {
-		list = new_list_node(buffer);
-		if (!list) {
-			return (NULL);
-		}
+	while (linelen != EOF) {
+		linelen = getline(buffer, &linecap, file);
+		line_count++;
 	}
 
-	while (getline(&buffer, &linecapp, file) > 0) {
-		previous_node = list;
-		list->next = new_list_node(buffer);
-		if (!list->next) {
-			return (NULL);
-		}
-		list = list->next;
-		list->previous = previous_node;
-	}
-	previous_node = list;
-	list->next = new_list_node(buffer);
-	list = list->next;
-	list->previous = previous_node;
-	free(buffer);
-
-	return (list);
+	return (line_count);
 }
 
-t_list	*new_list_node(char *buffer)
+void	print_reverted_lines(FILE *file, char **buffer, size_t line_count)
 {
-	t_list	*new_node = NULL;
+	size_t		line_count_buffer = 0;
+	ssize_t		linelen = 0;
+	size_t		linecap = 0;
 
-	new_node = (t_list *)malloc(sizeof(t_list));
-	if (!new_node) {
-		return (NULL);
+	while (line_count) {
+		rewind(file);
+		line_count_buffer = line_count;
+		while (line_count_buffer) {
+			linelen = getline(buffer, &linecap, file);
+			line_count_buffer--;
+		}
+		fseek(file, -linelen, SEEK_CUR);
+		getline(buffer, &linecap, file);
+		printf("%s", *buffer);
+		line_count--;
 	}
-	new_node->line = strdup(buffer);
-	if (!new_node->line) {
-		return (NULL);
-	}
-	new_node->next = NULL;
-	new_node->previous = NULL;
-
-	return (new_node);
-}
-
-void	clear_list(t_list *list)
-{
-	t_list	*clear = NULL;
-
-	while (list->next) {
-		clear = list;
-		free(list->line);
-		list = list->next;
-		free(clear);
-	}
-	free(list->line);
-	free(list);
 }
