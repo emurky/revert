@@ -4,14 +4,13 @@ int		main(int argc, char **argv)
 {
 	FILE	*file = NULL;
 	t_list	*list = NULL;
-	char	*buffer = NULL;
 
 	file = check_arguments(argc, argv[1]);
 	if (!file) {
 		return (1);
 	}
 
-	list = create_list(file, &buffer);
+	list = create_list(file);
 	while (list->previous) {
 		printf("%s", list->line);
 		list = list->previous;
@@ -19,7 +18,6 @@ int		main(int argc, char **argv)
 	printf("%s", list->line);
 
 	clear_list(list);
-	free(buffer);
 	fclose(file);
 
 	return (0);
@@ -43,27 +41,29 @@ FILE	*check_arguments(int argc, char *file_path)
 	return (file);
 }
 
-t_list	*create_list(FILE *file, char **buffer)
+t_list	*create_list(FILE *file)
 {
 	t_list	*list = NULL;
 	t_list	*previous_node = NULL;
+	char	*buffer = NULL;
 	size_t	linecapp;
 
-	if (getline(buffer, &linecapp, file)) {
-		list = new_list_node(*buffer);
+	if (getline(&buffer, &linecapp, file)) {
+		list = new_list_node(buffer);
 	}
 
-	while (getline(buffer, &linecapp, file) > 0) {
+	while (getline(&buffer, &linecapp, file) > 0) {
 		previous_node = list;
-		list->next = new_list_node(*buffer);
+		list->next = new_list_node(buffer);
 		list = list->next;
 		list->previous = previous_node;
 	}
-	getline(buffer, &linecapp, file);
+	getline(&buffer, &linecapp, file);
 	previous_node = list;
-	list->next = new_list_node(*buffer);
+	list->next = new_list_node(buffer);
 	list = list->next;
 	list->previous = previous_node;
+	free(buffer);
 
 	return (list);
 }
