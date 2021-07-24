@@ -11,6 +11,9 @@ int		main(int argc, char **argv)
 	}
 
 	list = create_list(file);
+	if (!list) {
+		return (1);
+	}
 	while (list->previous) {
 		printf("%s", list->line);
 		list = list->previous;
@@ -50,11 +53,17 @@ t_list	*create_list(FILE *file)
 
 	if (getline(&buffer, &linecapp, file)) {
 		list = new_list_node(buffer);
+		if (!list) {
+			return (NULL);
+		}
 	}
 
 	while (getline(&buffer, &linecapp, file) > 0) {
 		previous_node = list;
 		list->next = new_list_node(buffer);
+		if (!list->next) {
+			return (NULL);
+		}
 		list = list->next;
 		list->previous = previous_node;
 	}
@@ -72,7 +81,13 @@ t_list	*new_list_node(char *buffer)
 	t_list	*new_node = NULL;
 
 	new_node = (t_list *)malloc(sizeof(t_list));
+	if (!new_node) {
+		return (NULL);
+	}
 	new_node->line = strdup(buffer);
+	if (!new_node->line) {
+		return (NULL);
+	}
 	new_node->next = NULL;
 	new_node->previous = NULL;
 
