@@ -58,7 +58,6 @@ t_list	*create_list(FILE *file)
 		list = list->next;
 		list->previous = previous_node;
 	}
-	getline(&buffer, &linecapp, file);
 	previous_node = list;
 	list->next = new_list_node(buffer);
 	list = list->next;
