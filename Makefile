@@ -12,8 +12,11 @@ $(NAME):	$(OBJS)
 			$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
 
 clean:
-			rm -f $(OBJS) $(NAME)
+			rm -f $(OBJS)
 
-re:			clean all
+fclean:		clean
+			rm -f $(NAME)
+
+re:			fclean all
 
 #leaks --atExit -- ./revert revert.c
