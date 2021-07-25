@@ -3,7 +3,6 @@
 int		main(int argc, char **argv)
 {
 	FILE		*file = NULL;
-	char		*buffer = NULL;
 	size_t		lines_count = 0;
 
 	file = check_arguments(argc, argv[1]);
@@ -11,12 +10,10 @@ int		main(int argc, char **argv)
 		return (1);
 	}
 
-	lines_count = count_lines_in_file(file, &buffer) - 1;
-	print_reverted_lines(file, &buffer, lines_count);
-
-	free(buffer);
+	lines_count = count_lines_in_file(file) - 1;
+	print_reverted_lines(file, lines_count);
+	
 	fclose(file);
-
 	return (0);
 }
 
@@ -38,36 +35,54 @@ FILE	*check_arguments(int argc, char *file_path)
 	return (file);
 }
 
-size_t	count_lines_in_file(FILE *file, char **buffer)
+size_t	count_lines_in_file(FILE *file)
 {
 	size_t		lines_count = 0;
-	ssize_t		linelen = 0;
-	size_t		linecap = 0;
+	char c = fgetc(file);
 
-	while (linelen != EOF) {
-		linelen = getline(buffer, &linecap, file);
-		lines_count++;
+	if (c == EOF) {
+		return (1);
+	}
+	while (c != EOF) {
+		if (c == '\n') {
+			lines_count++;
+		}
+		c = fgetc(file);
 	}
 
 	return (lines_count);
 }
 
-void	print_reverted_lines(FILE *file, char **buffer, size_t lines_count)
+void	print_reverted_lines(FILE *file, size_t lines_count)
 {
 	ssize_t		linelen = 0;
-	size_t		linecap = 0;
 
 	fseek(file, -2, SEEK_END);
 	while (lines_count > 1) {
 		while ((fgetc(file) != '\n') && (lines_count > 1)) {
 			fseek(file, -2, SEEK_CUR);
 		}
-		linelen = getline(buffer, &linecap, file);
-		printf("%s", *buffer);
+		linelen = printline(file);
 		fseek(file, -(linelen + 2), SEEK_CUR);
 		lines_count--;
 	}
 	fseek(file, 0, SEEK_SET);
-	getline(buffer, &linecap, file);
-	printf("%s", *buffer);
+	printline(file);
+}
+
+size_t	printline(FILE *file)
+{
+	char		c;
+	size_t		linelen = 1;
+
+	while ((c = fgetc(file)) != '\n') {
+		if (c == EOF) {
+			return (1);
+		}
+		putchar(c);
+		linelen++;
+	}
+	putchar('\n');
+
+	return (linelen);
 }
