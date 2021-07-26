@@ -3,15 +3,13 @@
 int		main(int argc, char **argv)
 {
 	FILE		*file = NULL;
-	size_t		lines_count = 0;
 
 	file = check_arguments(argc, argv[1]);
 	if (!file) {
 		return (1);
 	}
 
-	lines_count = count_lines_in_file(file) - 1;
-	print_reverted_lines(file, lines_count);
+	print_reverted_lines(file);
 	
 	fclose(file);
 	return (0);
@@ -35,39 +33,24 @@ FILE	*check_arguments(int argc, char *file_path)
 	return (file);
 }
 
-size_t	count_lines_in_file(FILE *file)
-{
-	size_t		lines_count = 0;
-	char c = fgetc(file);
-
-	if (c == EOF) {
-		return (1);
-	}
-	while (c != EOF) {
-		if (c == '\n') {
-			lines_count++;
-		}
-		c = fgetc(file);
-	}
-
-	return (lines_count);
-}
-
-void	print_reverted_lines(FILE *file, size_t lines_count)
+void	print_reverted_lines(FILE *file)
 {
 	ssize_t		linelen = 0;
+	int 		file_pos;
 
 	fseek(file, -2, SEEK_END);
-	while (lines_count > 1) {
-		while ((fgetc(file) != '\n') && (lines_count > 1)) {
-			fseek(file, -2, SEEK_CUR);
+	while (true) {
+		while (fgetc(file) != '\n') {
+			file_pos = fseek(file, -2, SEEK_CUR);
+			if (file_pos == -1) {
+				fseek(file, -1, SEEK_CUR);
+				printline(file);
+				return ;
+			}
 		}
 		linelen = printline(file);
 		fseek(file, -(linelen + 2), SEEK_CUR);
-		lines_count--;
 	}
-	fseek(file, 0, SEEK_SET);
-	printline(file);
 }
 
 size_t	printline(FILE *file)
