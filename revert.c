@@ -36,10 +36,10 @@ FILE	*check_arguments(int argc, char *file_path)
 void	print_reverted_lines(FILE *file)
 {
 	ssize_t		linelen = 0;
-	int 		file_pos;
+	int 		file_pos = 0;
 
 	fseek(file, -2, SEEK_END);
-	while (true) {
+	while (file_pos != -1) {
 		while (fgetc(file) != '\n') {
 			file_pos = fseek(file, -2, SEEK_CUR);
 			if (file_pos == -1) {
@@ -49,8 +49,13 @@ void	print_reverted_lines(FILE *file)
 			}
 		}
 		linelen = printline(file);
-		fseek(file, -(linelen + 2), SEEK_CUR);
+		file_pos = fseek(file, -(linelen + 2), SEEK_CUR);
 	}
+	if (file_pos == -1) {
+		putchar('\n');
+	}
+
+	return ;
 }
 
 size_t	printline(FILE *file)
@@ -58,12 +63,14 @@ size_t	printline(FILE *file)
 	char		c;
 	size_t		linelen = 1;
 
-	while ((c = fgetc(file)) != '\n') {
-		if (c == EOF) {
-			return (1);
-		}
+	c = fgetc(file);
+	if (c == EOF) {
+		return (1);
+	}
+	while (c != '\n') {
 		putchar(c);
 		linelen++;
+		c = fgetc(file);
 	}
 	putchar('\n');
 
