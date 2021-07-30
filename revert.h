@@ -2,14 +2,15 @@
 # define REVERT_H
 
 # include <stdio.h>
+# include <unistd.h>
 # include <fcntl.h>
 # include <stdlib.h>
 # include <stdbool.h>
 # include <string.h>
 
-FILE		*check_arguments(int argc, char *file_path);
-size_t		count_lines_in_file(FILE *file);
-void		print_reverted_lines(FILE *file);
-size_t		printline(FILE *file);
+int			check_arguments(int argc, char *file_path);
+size_t		count_lines_in_file(int fd);
+void		print_reverted_lines(int fd);
+size_t		printline(int fd);
 
 #endif

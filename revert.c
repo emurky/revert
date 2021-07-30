@@ -2,77 +2,80 @@
 
 int		main(int argc, char **argv)
 {
-	FILE		*file = NULL;
+	int		fd;
 
-	file = check_arguments(argc, argv[1]);
-	if (!file) {
+	fd = check_arguments(argc, argv[1]);
+	if (fd < 0) {
 		return (1);
 	}
 
-	print_reverted_lines(file);
+	print_reverted_lines(fd);
 	
-	fclose(file);
+	close(fd);
 	return (0);
 }
 
-FILE	*check_arguments(int argc, char *file_path)
+int		check_arguments(int argc, char *file_path)
 {
-	FILE	*file = NULL;
+	int		fd;
 
 	if (argc != 2) {
 		printf("Error\nThere must be only one argument as a file name\n");
-		return (NULL);
+		return (-1);
 	}
 
-	file = fopen(file_path, "r");
-	if (!file) {
+	fd = open(file_path, O_RDONLY);
+	if (fd < 0) {
 		printf("Error\nCannot open file\n");
-		return (NULL);
+		return (-1);
 	}
 
-	return (file);
+	return (fd);
 }
 
-void	print_reverted_lines(FILE *file)
+void	print_reverted_lines(int fd)
 {
 	ssize_t		linelen = 0;
 	int 		file_pos = 0;
+	int			read_check;
+	char		c = -1;
 
-	fseek(file, -2, SEEK_END);
+	lseek(fd, -2, SEEK_END);
 	while (file_pos != -1) {
-		while (fgetc(file) != '\n') {
-			file_pos = fseek(file, -2, SEEK_CUR);
+		read_check = read(fd, &c, sizeof(char));
+		while (c != '\n') {
+			file_pos = lseek(fd, -2, SEEK_CUR);
 			if (file_pos == -1) {
-				fseek(file, -1, SEEK_CUR);
-				printline(file);
+				lseek(fd, -1, SEEK_CUR);
+				printline(fd);
 				return ;
 			}
+			read_check = read(fd, &c, sizeof(char));
 		}
-		linelen = printline(file);
-		file_pos = fseek(file, -(linelen + 2), SEEK_CUR);
+		linelen = printline(fd);
+		file_pos = lseek(fd, -(linelen + 2), SEEK_CUR);
 	}
-	if (file_pos == -1) {
-		putchar('\n');
-	}
+	write(1, "\n", 1);
 
 	return ;
 }
 
-size_t	printline(FILE *file)
+size_t	printline(int fd)
 {
-	char		c;
+	char		c = -1;
 	size_t		linelen = 1;
+	int			read_check;
 
-	c = fgetc(file);
+	read_check = read(fd, &c, sizeof(char));
 	if (c == EOF) {
 		return (1);
 	}
 	while (c != '\n') {
-		putchar(c);
+		write(1, &c, 1);
 		linelen++;
-		c = fgetc(file);
+		read_check = read(fd, &c, sizeof(char));
 	}
-	putchar('\n');
+	write(1, "\n", 1);
 
 	return (linelen);
 }
