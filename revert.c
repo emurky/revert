@@ -70,10 +70,13 @@ size_t	printline(int fd)
 	if (c == EOF) {
 		return (1);
 	}
-	while (c != '\n') {
+	while (c != '\n' && read_check) {
 		write(1, &c, 1);
-		linelen++;
 		read_check = read(fd, &c, sizeof(char));
+		linelen++;
+	}
+	if (!read_check) {
+		linelen--;
 	}
 	write(1, "\n", 1);
 
