@@ -75,9 +75,10 @@ size_t	printline(int fd)
 		read_check = read(fd, &c, sizeof(char));
 		linelen++;
 	}
-	if (!read_check) {
-		linelen--;
-	}
+	/* it is commented to be more alike tac */
+	// if (!read_check) {
+	// 	linelen--;
+	// }
 	write(1, "\n", 1);
 
 	return (linelen);
