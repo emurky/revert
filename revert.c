@@ -33,50 +33,152 @@ int		check_arguments(int argc, char *file_path)
 	return (fd);
 }
 
+void	buffer_handler(char *buffer)
+{
+	ssize_t		linelen = 0;
+	char		*nl_pointer = NULL;
+	char		remainder[BUFFER_SIZE + 1];
+bzero(remainder, '\0');
+	nl_pointer = strrchr(buffer, '\n');
+	*nl_pointer = '\0';
+	while (nl_pointer) {
+		nl_pointer = strrchr(buffer, '\n');
+		// *nl_pointer = '\0';
+		nl_pointer++;
+		linelen = strlen(nl_pointer) + 1;
+		write(1, nl_pointer, linelen);
+		nl_pointer =  buffer + BUFFER_SIZE - (linelen + 1);
+		*nl_pointer = '\0';
+		strcpy(remainder, buffer);
+	}
+
+}
+
 void	print_reverted_lines(int fd)
 {
 	ssize_t		linelen = 0;
-	int 		file_pos = 0;
-	int			read_check;
-	char		c = -1;
+	off_t 		file_pos = 0;
+	off_t		prev_file_pos = 0;
+	int			bytes_read = 0;
 
-	lseek(fd, -2, SEEK_END);
-	while (file_pos != -1) {
-		read_check = read(fd, &c, sizeof(char));
-		while (c != '\n') {
-			file_pos = lseek(fd, -2, SEEK_CUR);
-			if (file_pos == -1) {
-				lseek(fd, -1, SEEK_CUR);
-				printline(fd);
-				return ;
+	// char		c = -1;
+	char		buffer[BUFFER_SIZE + 1];
+	char		*nl_pointer = NULL;
+	// off_t		lseek_check;
+
+size_t	bufflen = 0;
+size_t	tmp_bufflen = 0;
+
+int end = false;
+size_t		buffer_size;
+buffer_size = BUFFER_SIZE;
+	file_pos = lseek(fd, -(0 + BUFFER_SIZE), SEEK_END);
+	while (true) {
+		// if (end) {
+		// 	bytes_read = read(fd, buffer, prev_file_pos + 1);
+		// 	buffer[prev_file_pos + 1] = '\0';
+		// }
+		// else {
+			bytes_read = read(fd, buffer, BUFFER_SIZE);
+			buffer[BUFFER_SIZE] = '\0';
+		// }
+		nl_pointer = strrchr(buffer, '\n');
+		while (nl_pointer) {
+			
+			if (bufflen > BUFFER_SIZE) {
+				tmp_bufflen = bufflen;
+				linelen = strlen(nl_pointer);
+				write(1, nl_pointer, linelen);
+				// read(fd, buffer, linelen);
+				while ((bufflen / BUFFER_SIZE) > 0) {
+					read(fd, buffer, BUFFER_SIZE);
+					write(1, buffer, BUFFER_SIZE);
+					bufflen -= BUFFER_SIZE;
+				}
+				read(fd, buffer, bufflen);
+				write(1, buffer, bufflen);
+				// write(1, "\n", 1);
+				bufflen = 0;
+				file_pos = lseek(fd, -(tmp_bufflen + BUFFER_SIZE), SEEK_CUR);
+				bytes_read = read(fd, buffer, BUFFER_SIZE);
+				nl_pointer = strrchr(buffer, '\n');
+				*nl_pointer = '\0';
+				// bytes_read = read(fd, buffer, BUFFER_SIZE);
 			}
-			read_check = read(fd, &c, sizeof(char));
+			else {
+				linelen = strlen(nl_pointer);
+				write(1, nl_pointer, linelen);
+				*nl_pointer = '\0';
+				// write(1, nl_pointer, linelen);
+			}
+			nl_pointer = strrchr(buffer, '\n');
 		}
-		linelen = printline(fd);
-		file_pos = lseek(fd, -(linelen + 2), SEEK_CUR);
+		if (!bufflen && !nl_pointer) {
+			bufflen = strlen(buffer);
+			// file_pos = lseek(fd, -(0 + BUFFER_SIZE), SEEK_CUR);
+		}
+		else if (bufflen) {
+			bufflen += BUFFER_SIZE;
+			// file_pos = lseek(fd, -(0 + BUFFER_SIZE), SEEK_CUR);
+		}
+		prev_file_pos = file_pos;
+		if (end) {
+			write(1, "\n", 1);
+			nl_pointer = strchr(buffer, '\n');
+			while (!nl_pointer) {
+				write(1, buffer, strlen(buffer));
+				read(fd, buffer, strlen(buffer));
+				nl_pointer = strchr(buffer, '\n');
+			}
+			write(1, buffer, nl_pointer - buffer);
+			write(1, "\n", 1);
+			break ;
+		}
+		file_pos = lseek(fd, -(2 * BUFFER_SIZE), SEEK_CUR);
+		if (file_pos == -1) {
+			file_pos = lseek(fd, 0, SEEK_SET);
+			end = true;
+		}
 	}
-	write(1, "\n", 1);
+	
+	// file_pos = lseek(fd, 0, SEEK_SET);
 
-	return ;
+	// bytes_read = read(fd, buffer, prev_file_pos + 1);
+	// buffer[prev_file_pos + 1] = '\0';
+	// nl_pointer = strrchr(buffer, '\n');
+
+	// while (nl_pointer) {
+	// 	linelen = strlen(nl_pointer);
+	// 	// *nl_pointer = '\0';
+	// 	write(1, nl_pointer, linelen);
+	// 	*nl_pointer = '\0';
+	// 	nl_pointer = strrchr(buffer, '\n');
+	// }
+
+
+	// write(1, "\n", 1);
+	// write(1, buffer, strlen(buffer));
+	// write(1, "\n", 1);
+	// return ;
 }
 
 size_t	printline(int fd)
 {
 	char		c = -1;
 	size_t		linelen = 1;
-	int			read_check;
+	int			bytes_read;
 
-	read_check = read(fd, &c, sizeof(char));
+	bytes_read = read(fd, &c, sizeof(char));
 	if (c == EOF) {
 		return (1);
 	}
-	while (c != '\n' && read_check) {
+	while (c != '\n' && bytes_read) {
 		write(1, &c, 1);
-		read_check = read(fd, &c, sizeof(char));
+		bytes_read = read(fd, &c, sizeof(char));
 		linelen++;
 	}
 	/* it is commented to be more alike tac */
-	// if (!read_check) {
+	// if (!bytes_read) {
 	// 	linelen--;
 	// }
 	write(1, "\n", 1);

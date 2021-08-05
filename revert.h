@@ -8,6 +8,10 @@
 # include <stdbool.h>
 # include <string.h>
 
+# ifndef BUFFER_SIZE
+# define BUFFER_SIZE	15
+# endif
+
 int			check_arguments(int argc, char *file_path);
 size_t		count_lines_in_file(int fd);
 void		print_reverted_lines(int fd);
