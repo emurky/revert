@@ -1,7 +1,5 @@
 #include "revert.h"
 
-#define BUFFER_SIZE		6
-
 int		main(int argc, char **argv)
 {
 	int		fd;
@@ -35,47 +33,97 @@ int		check_arguments(int argc, char *file_path)
 	return (fd);
 }
 
+#define BUFFER_SIZE		6
+
+void	print_line(int fd, char *buffer, int *line_len)
+{
+	int		mod = 0;
+	
+	while (*line_len >= BUFFER_SIZE) {
+		*line_len -= read(fd, buffer, BUFFER_SIZE);
+		write(1, buffer, BUFFER_SIZE);
+	}
+	mod = *line_len % BUFFER_SIZE;
+	*line_len -= read(fd, buffer, mod);
+	buffer[mod] = '\0';
+	write(1, buffer, mod);
+	write(1, "\n", 1);
+}
+
 void	print_reverted_lines(int fd)
 {
 	char	buffer[BUFFER_SIZE + 1];
-	// int		buffer_size = BUFFER_SIZE;
+	int		buffer_size = BUFFER_SIZE;
+	int		chars_in_file = 0;
 	int		lseek_ret = 0;
-	int		read_ret = 0;
+	int		line_len = 0;
 	char	*nl_pointer = NULL;
-	int		check;
-	int		mod = 0;
+	// int		check;
+	// int		mod = 0;
 	int		chars_until_nl = 0;
 	int		prev_nl_pos = 0;
-	int		buffers_in_file = 0;
-	
+	// int		buffers_in_file = 0;
+	int		end = false;
+
 	bzero(buffer, sizeof(buffer));
-	check = strlen(buffer);
-	lseek_ret = lseek(fd, 0, SEEK_END);
-	buffers_in_file = lseek_ret / BUFFER_SIZE;
-	while (buffers_in_file) {
+	chars_in_file = lseek(fd, 0, SEEK_END);
+	lseek_ret = chars_in_file;
+	if (lseek_ret < buffer_size) {
+		buffer_size = lseek_ret;
+	}
+	while (!end) {
+		// if (2 * buffer_size > lseek_ret) {
+		// 	buffer_size /= 2;
+		// }
 		lseek_ret = lseek(fd, -(BUFFER_SIZE + 1), SEEK_CUR);
 		do {
-			read_ret += read(fd, buffer, BUFFER_SIZE);
+			line_len += read(fd, buffer, BUFFER_SIZE);
 			buffer[BUFFER_SIZE] = '\0';
 			nl_pointer = strrchr(buffer, '\n');
-			lseek_ret = lseek(fd, -(2 * BUFFER_SIZE + 0), SEEK_CUR);
+			lseek_ret = lseek(fd, -2 * BUFFER_SIZE, SEEK_CUR);
+			// if (lseek_ret == -1) {
+			// 	lseek_ret = lseek(fd, 0, SEEK_SET);
+			// 	line_len = read(fd, buffer, BUFFER_SIZE);
+			// 	nl_pointer = strrchr(buffer, '\n');
+			// 	while (!nl_pointer) {
+			// 		write(1, buffer, BUFFER_SIZE);
+			// 		read(fd, buffer, BUFFER_SIZE);
+			// 		nl_pointer = strrchr(buffer, '\n');
+			// 	}
+			// 	*nl_pointer = '\0';
+			// 	write(1, buffer, strlen(buffer));
+			// 	write(1, "\n", 1);
+			// 	end = true;
+			// 	break ;
+			// }
 			if (nl_pointer) {
 				chars_until_nl = nl_pointer - buffer + 1;
 				lseek_ret = lseek(fd, chars_until_nl + BUFFER_SIZE, SEEK_CUR);
-				read_ret -= chars_until_nl;
+				line_len -= chars_until_nl;
 			}
 		} while (!nl_pointer);
-		prev_nl_pos = read_ret;
-		while (read_ret >= BUFFER_SIZE) {
-			read_ret -= read(fd, buffer, BUFFER_SIZE);
-			write(1, buffer, strlen(buffer));
-		}
-		mod = read_ret % BUFFER_SIZE;
-		read_ret -= read(fd, buffer, mod);
-		buffer[mod] = '\0';
-		write(1, buffer, mod);
-		write(1, "\n", 1);
-		lseek_ret = lseek(fd, -(prev_nl_pos + 0), SEEK_CUR);
-		buffers_in_file--;
+		prev_nl_pos = line_len;
+		print_line(fd, buffer, &line_len);
+		// if (lseek_ret > 0 && !end) {
+		// 	while (line_len >= BUFFER_SIZE) {
+		// 		line_len -= read(fd, buffer, BUFFER_SIZE);
+		// 		write(1, buffer, BUFFER_SIZE);
+		// 	}
+		// 	mod = line_len % BUFFER_SIZE;
+		// 	line_len -= read(fd, buffer, mod);
+		// 	buffer[mod] = '\0';
+		// 	write(1, buffer, mod);
+		// 	write(1, "\n", 1);
+		// }
+		lseek_ret = lseek(fd, -prev_nl_pos, SEEK_CUR);
+	}
+}
+
+int		min(int x, int y) {
+	if (x <= y) {
+		return (x);
+	}
+	else {
+		return (y);
 	}
 }
