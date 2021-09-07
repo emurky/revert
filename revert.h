@@ -9,10 +9,14 @@
 # include <string.h>
 # include <stdlib.h>
 
+# ifndef	BUFFER_SIZE
+# define	BUFFER_SIZE		42
+# endif
+
 int			check_arguments(int argc, char *file_path);
-size_t		count_lines_in_file(int fd);
+void		print_line(int fd, char *buffer, int *line_len);
+size_t		print_line_1char(int fd);
+void		handle_file_beginning(int fd, int file_pos);
 void		print_reverted_lines(int fd);
-size_t		printline(int fd);
-int		min(int x, int y);
 
 #endif
