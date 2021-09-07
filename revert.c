@@ -33,71 +33,6 @@ int		check_arguments(int argc, char *file_path)
 	return (fd);
 }
 
-void	print_line(int fd, char *buffer, int *line_len)
-{
-	int		remainder = 0;
-	
-	while (*line_len >= BUFFER_SIZE) {
-		*line_len -= read(fd, buffer, BUFFER_SIZE);
-		write(1, buffer, BUFFER_SIZE);
-	}
-	remainder = *line_len % BUFFER_SIZE;
-	*line_len -= read(fd, buffer, remainder);
-	buffer[remainder] = '\0';
-	write(1, buffer, remainder);
-	write(1, "\n", 1);
-}
-
-size_t	print_line_1char(int fd)
-{
-	char		c = -1;
-	size_t		linelen = 1;
-	int			read_check;
-
-	read_check = read(fd, &c, sizeof(char));
-	if (c == EOF) {
-		return (1);
-	}
-	while (c != '\n' && read_check) {
-		write(1, &c, 1);
-		read_check = read(fd, &c, sizeof(char));
-		linelen++;
-	}
-	/* it is commented to be more alike tac */
-	// if (!read_check) {
-	// 	linelen--;
-	// }
-	write(1, "\n", 1);
-
-	return (linelen);
-}
-
-void	handle_file_beginning(int fd, int file_pos)
-{
-	ssize_t		linelen = 0;
-	int			read_check;
-	char		c = -1;
-
-	lseek(fd, file_pos, SEEK_SET);
-	while (file_pos != -1) {
-		read_check = read(fd, &c, sizeof(char));
-		while (c != '\n') {
-			file_pos = lseek(fd, -2, SEEK_CUR);
-			if (file_pos == -1) {
-				lseek(fd, -1, SEEK_CUR);
-				print_line_1char(fd);
-				return ;
-			}
-			read_check = read(fd, &c, sizeof(char));
-		}
-		linelen = print_line_1char(fd);
-		file_pos = lseek(fd, -(linelen + 2), SEEK_CUR);
-	}
-	write(1, "\n", 1);
-
-	return ;
-}
-
 void	print_reverted_lines(int fd)
 {
 	char	buffer[BUFFER_SIZE + 1];
@@ -141,4 +76,69 @@ void	print_reverted_lines(int fd)
 		print_line(fd, buffer, &line_len);
 		file_pos = lseek(fd, -prev_nl_pos, SEEK_CUR);
 	}
+}
+
+void	handle_file_beginning(int fd, int file_pos)
+{
+	ssize_t		linelen = 0;
+	int			read_check;
+	char		c = -1;
+
+	lseek(fd, file_pos, SEEK_SET);
+	while (file_pos != -1) {
+		read_check = read(fd, &c, sizeof(char));
+		while (c != '\n') {
+			file_pos = lseek(fd, -2, SEEK_CUR);
+			if (file_pos == -1) {
+				lseek(fd, -1, SEEK_CUR);
+				print_line_1char(fd);
+				return ;
+			}
+			read_check = read(fd, &c, sizeof(char));
+		}
+		linelen = print_line_1char(fd);
+		file_pos = lseek(fd, -(linelen + 2), SEEK_CUR);
+	}
+	write(1, "\n", 1);
+
+	return ;
+}
+
+void	print_line(int fd, char *buffer, int *line_len)
+{
+	int		remainder = 0;
+	
+	while (*line_len >= BUFFER_SIZE) {
+		*line_len -= read(fd, buffer, BUFFER_SIZE);
+		write(1, buffer, BUFFER_SIZE);
+	}
+	remainder = *line_len % BUFFER_SIZE;
+	*line_len -= read(fd, buffer, remainder);
+	buffer[remainder] = '\0';
+	write(1, buffer, remainder);
+	write(1, "\n", 1);
+}
+
+size_t	print_line_1char(int fd)
+{
+	char		c = -1;
+	size_t		linelen = 1;
+	int			read_check;
+
+	read_check = read(fd, &c, sizeof(char));
+	if (c == EOF) {
+		return (1);
+	}
+	while (c != '\n' && read_check) {
+		write(1, &c, 1);
+		read_check = read(fd, &c, sizeof(char));
+		linelen++;
+	}
+	/* it is commented to be more alike tac */
+	// if (!read_check) {
+	// 	linelen--;
+	// }
+	write(1, "\n", 1);
+
+	return (linelen);
 }

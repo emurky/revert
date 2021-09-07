@@ -5,7 +5,7 @@ DEPS		= $(SRCS:.c=.d)
 NAME		= revert
 
 CC			= gcc
-CFLAGS		= -Wall -Wextra -Werror -g #-fsanitize=address
+CFLAGS		= -Wall -Wextra -Werror -O2 #-g #-fsanitize=address
 CPPFLAGS	= -MMD
 
 all:		$(NAME)
