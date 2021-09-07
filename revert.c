@@ -134,10 +134,6 @@ void	print_reverted_lines(int fd)
 				prev_file_pos = file_pos;
 				file_pos = lseek(fd, chars_until_nl + BUFFER_SIZE, SEEK_CUR);
 				line_len -= chars_until_nl;
-				if (file_pos < 0) {
-					handle_file_beginning(fd, prev_file_pos);
-					return ;
-				}
 			}
 		} while (!nl_pointer);
 
